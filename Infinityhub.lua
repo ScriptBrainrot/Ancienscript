@@ -1,154 +1,208 @@
+-- Infinity Hub - Mobile Compatible Full Script with Auto Lock Fix
+
 local Players = game:GetService("Players")
-local Player = Players.LocalPlayer
+local RunService = game:GetService("RunService")
 local StarterGui = game:GetService("StarterGui")
-local Workspace = game:GetService("Workspace")
-local Character = Player.Character or Player.CharacterAdded:Wait()
-local Humanoid = Character:WaitForChild("Humanoid")
-local RootPart = Character:WaitForChild("HumanoidRootPart")
+local LocalPlayer = Players.LocalPlayer
 
-local FLY_HEIGHT = 150
-local isFlying = false
-local AirPlatform = nil
-
--- Fonction de vol
-local function CreateSkyPlatform()
-    if AirPlatform then return end
-    AirPlatform = Instance.new("Part")
-    AirPlatform.Name = "PermanentSkyPlatform"
-    AirPlatform.Size = Vector3.new(10000, 5, 10000)
-    AirPlatform.Position = Vector3.new(0, FLY_HEIGHT, 0)
-    AirPlatform.Anchored = true
-    AirPlatform.Transparency = 1
-    AirPlatform.CanCollide = true
-    AirPlatform.Parent = Workspace
-    AirPlatform:SetAttribute("Permanent", true)
-end
-
--- Création du ScreenGui
+-- UI Setup
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-ScreenGui.Name = "InfinityHubKeySystem"
+ScreenGui.Name = "InfinityHubUI"
 ScreenGui.ResetOnSpawn = false
 
--- UI de vérification de clé
-local KeyFrame = Instance.new("Frame", ScreenGui)
-KeyFrame.Size = UDim2.new(0, 300, 0, 150)
-KeyFrame.Position = UDim2.new(0.5, -150, 0.5, -75)
-KeyFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-KeyFrame.BorderSizePixel = 0
-Instance.new("UICorner", KeyFrame).CornerRadius = UDim.new(0, 10)
+local openButton = Instance.new("TextButton", ScreenGui)
+openButton.Size = UDim2.new(0, 150, 0, 50)
+openButton.Position = UDim2.new(0, 20, 0, 140)
+openButton.Text = "🌸 Infinity Hub"
+openButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+openButton.TextScaled = true
+openButton.TextColor3 = Color3.new(1,1,1)
+openButton.Font = Enum.Font.GothamBold
 
--- Titre
-local KeyTitle = Instance.new("TextLabel", KeyFrame)
-KeyTitle.Size = UDim2.new(1, 0, 0.25, 0)
-KeyTitle.Position = UDim2.new(0, 0, 0, 0)
-KeyTitle.BackgroundTransparency = 1
-KeyTitle.Text = "Code System"
-KeyTitle.TextColor3 = Color3.new(1, 1, 1)
-KeyTitle.Font = Enum.Font.GothamBold
-KeyTitle.TextScaled = true
+local mainFrame = Instance.new("Frame", ScreenGui)
+mainFrame.Size = UDim2.new(0, 350, 0, 420)
+mainFrame.Position = UDim2.new(0.5, -175, 0.5, -210)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+mainFrame.Visible = false
+Instance.new("UICorner", mainFrame)
 
--- Zone de texte
-local TextBox = Instance.new("TextBox", KeyFrame)
-TextBox.Size = UDim2.new(0.9, 0, 0.3, 0)
-TextBox.Position = UDim2.new(0.05, 0, 0.35, 0)
-TextBox.PlaceholderText = "Enter Code Here"
-TextBox.Text = ""
-TextBox.ClearTextOnFocus = false
-TextBox.Font = Enum.Font.Gotham
-TextBox.TextScaled = true
-TextBox.TextColor3 = Color3.new(0, 0, 0)
-TextBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-Instance.new("UICorner", TextBox).CornerRadius = UDim.new(0, 6)
+local title = Instance.new("TextLabel", mainFrame)
+title.Size = UDim2.new(1, 0, 0, 50)
+title.Text = "🌸 Infinity Hub"
+title.BackgroundTransparency = 1
+title.TextScaled = true
+title.Font = Enum.Font.GothamBold
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
 
--- Bouton Check
-local CheckButton = Instance.new("TextButton", KeyFrame)
-CheckButton.Size = UDim2.new(0.6, 0, 0.25, 0)
-CheckButton.Position = UDim2.new(0.2, 0, 0.7, 0)
-CheckButton.Text = "CHECK"
-CheckButton.TextScaled = true
-CheckButton.Font = Enum.Font.GothamBold
-CheckButton.TextColor3 = Color3.new(1, 1, 1)
-CheckButton.BackgroundColor3 = Color3.fromRGB(0, 153, 255)
-Instance.new("UICorner", CheckButton).CornerRadius = UDim.new(0, 8)
+-- Tabs
+local tabButtons, contentFrames = {}, {}
+local tabNames = {"Main", "AutoFarm", "Misc"}
 
--- Fonction d'affichage du GUI principal
-local function ShowMainGUI()
-    -- Fenêtre principale
-    local Frame = Instance.new("Frame", ScreenGui)
-    Frame.Size = UDim2.new(0, 200, 0, 100)
-    Frame.Position = UDim2.new(0.5, -100, 0.5, -50)
-    Frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    Frame.BorderSizePixel = 0
-    Frame.Active = true
-    Frame.Draggable = true
-    Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 10)
+for i, name in ipairs(tabNames) do
+	local button = Instance.new("TextButton", mainFrame)
+	button.Size = UDim2.new(0, 100, 0, 30)
+	button.Position = UDim2.new(0, 10 + (i - 1) * 110, 0, 55)
+	button.Text = name
+	button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+	button.TextColor3 = Color3.new(1,1,1)
+	button.Font = Enum.Font.Gotham
+	button.TextScaled = true
+	tabButtons[name] = button
 
-    -- Titre
-    local Title = Instance.new("TextLabel", Frame)
-    Title.Size = UDim2.new(1, 0, 0.4, 0)
-    Title.Position = UDim2.new(0, 0, 0, 0)
-    Title.Text = "Steal | Infinity Hub"
-    Title.TextColor3 = Color3.new(1, 1, 1)
-    Title.BackgroundTransparency = 1
-    Title.Font = Enum.Font.GothamBold
-    Title.TextScaled = true
-
-    -- Bouton principal
-    local Button = Instance.new("TextButton", Frame)
-    Button.Size = UDim2.new(0.7, 0, 0.4, 0)
-    Button.Position = UDim2.new(0.15, 0, 0.5, 0)
-    Button.BackgroundColor3 = Color3.fromRGB(0, 153, 255)
-    Button.TextColor3 = Color3.new(1, 1, 1)
-    Button.Font = Enum.Font.GothamBold
-    Button.TextScaled = true
-    Button.Text = "Steal"
-    Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 8)
-
-    -- Notification verte personnalisée
-    local Notify = Instance.new("TextLabel", ScreenGui)
-    Notify.Size = UDim2.new(0.8, 0, 0, 40)
-    Notify.Position = UDim2.new(0.1, 0, 1, -60)
-    Notify.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-    Notify.TextColor3 = Color3.new(0, 0, 0)
-    Notify.Font = Enum.Font.GothamSemibold
-    Notify.TextScaled = true
-    Notify.Text = "Thanks use our script for better join our discord server for v2 https://discord.gg/ZVX8GNMNaD"
-    Notify.BackgroundTransparency = 0.2
-    Notify.BorderSizePixel = 0
-    Instance.new("UICorner", Notify).CornerRadius = UDim.new(1, 0)
-
-    task.delay(8, function()
-        if Notify then Notify:Destroy() end
-    end)
-
-    -- Fonction du bouton
-    Button.MouseButton1Click:Connect(function()
-        if not isFlying then
-            CreateSkyPlatform()
-            isFlying = true
-            RootPart.CFrame = CFrame.new(RootPart.Position.X, FLY_HEIGHT + 3, RootPart.Position.Z)
-            Humanoid:ChangeState(Enum.HumanoidStateType.Running)
-            Button.Text = "Down"
-        else
-            local rayOrigin = Vector3.new(RootPart.Position.X, FLY_HEIGHT - 2, RootPart.Position.Z)
-            local rayResult = Workspace:Raycast(rayOrigin, Vector3.new(0, -1000, 0))
-            if rayResult then
-                RootPart.CFrame = CFrame.new(rayResult.Position + Vector3.new(0, 3, 0))
-            end
-            isFlying = false
-            Button.Text = "Steal"
-        end
-    end)
+	local frame = Instance.new("Frame", mainFrame)
+	frame.Size = UDim2.new(1, -20, 1, -100)
+	frame.Position = UDim2.new(0, 10, 0, 95)
+	frame.BackgroundTransparency = 1
+	frame.Visible = name == "Main"
+	contentFrames[name] = frame
 end
 
--- Vérification de la clé
-CheckButton.MouseButton1Click:Connect(function()
-    local entered = string.lower(TextBox.Text)
-    if entered == "infinity hub" then
-        KeyFrame:Destroy()
-        ShowMainGUI()
-    else
-        TextBox.Text = ""
-        TextBox.PlaceholderText = "❌ Invalid Code"
-    end
+for name, button in pairs(tabButtons) do
+	button.MouseButton1Click:Connect(function()
+		for n, frame in pairs(contentFrames) do
+			frame.Visible = n == name
+		end
+	end)
+end
+
+-- Save Preferences
+local function savePreferences()
+	writefile("InfinityHub_Preferences.txt", "Saved.")
+end
+
+-- Auto Steal
+local function launchAutoStealScript()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/Youifpg/Steal-a-Brianrot/refs/heads/main/ArbixHubBEST.lua"))()
+end
+
+-- Speed Boost
+local function speedBoost()
+	local function applySpeed()
+		local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+		if hum then hum.WalkSpeed = 200 end
+	end
+	applySpeed()
+	LocalPlayer.CharacterAdded:Connect(function()
+		wait(1)
+		applySpeed()
+	end)
+end
+
+-- ESP
+local function createESPForPlayer(p)
+	if p ~= LocalPlayer then
+		local function addESP(char)
+			local head = char:WaitForChild("Head", 5)
+			if head and not head:FindFirstChild("ESPTag") then
+				local esp = Instance.new("BillboardGui", head)
+				esp.Name = "ESPTag"
+				esp.Size = UDim2.new(0, 200, 0, 50)
+				esp.AlwaysOnTop = true
+				esp.StudsOffset = Vector3.new(0, 2, 0)
+				local nameLabel = Instance.new("TextLabel", esp)
+				nameLabel.Size = UDim2.new(1, 0, 1, 0)
+				nameLabel.BackgroundTransparency = 1
+				nameLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+				nameLabel.Text = p.Name
+				nameLabel.TextScaled = true
+				nameLabel.Font = Enum.Font.GothamBold
+			end
+		end
+		if p.Character then addESP(p.Character) end
+		p.CharacterAdded:Connect(addESP)
+	end
+end
+
+local function enableESP()
+	for _, p in pairs(Players:GetPlayers()) do
+		createESPForPlayer(p)
+	end
+	Players.PlayerAdded:Connect(function(p)
+		createESPForPlayer(p)
+	end)
+end
+
+-- Auto Lock (Mobile-Compatible)
+local autoLockEnabled = false
+local rotationConnection
+
+local function toggleAutoLock()
+	autoLockEnabled = not autoLockEnabled
+
+	if autoLockEnabled then
+		StarterGui:SetCore("SendNotification", {
+			Title = "Infinity Hub",
+			Text = "Auto Lock ACTIVATED (mobile compatible)",
+			Duration = 4
+		})
+
+		rotationConnection = RunService.RenderStepped:Connect(function()
+			if not LocalPlayer.Character then return end
+			local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+			local cam = workspace.CurrentCamera
+			if hrp and cam then
+				local look = cam.CFrame.lookVector
+				local yaw = CFrame.new(Vector3.zero, Vector3.new(look.X, 0, look.Z))
+				hrp.CFrame = CFrame.new(hrp.Position) * yaw
+			end
+		end)
+	else
+		if rotationConnection then
+			rotationConnection:Disconnect()
+			rotationConnection = nil
+		end
+		StarterGui:SetCore("SendNotification", {
+			Title = "Infinity Hub",
+			Text = "Auto Lock DEACTIVATED",
+			Duration = 4
+		})
+	end
+end
+
+-- Copy Discord
+local function copyDiscordLink()
+	setclipboard("https://discord.gg/cRBvSXukR7")
+	StarterGui:SetCore("SendNotification", {
+		Title = "Infinity Hub",
+		Text = "Infinity Hub link copy !",
+		Duration = 4
+	})
+end
+
+-- Button builder
+local function createButton(parent, text, callback, order)
+	local btn = Instance.new("TextButton", parent)
+	btn.Size = UDim2.new(1, 0, 0, 45)
+	btn.Position = UDim2.new(0, 0, 0, (order - 1) * 50)
+	btn.Text = text
+	btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+	btn.TextColor3 = Color3.new(1,1,1)
+	btn.TextScaled = true
+	btn.Font = Enum.Font.GothamBold
+	btn.MouseButton1Click:Connect(callback)
+end
+
+-- Onglet Main
+createButton(contentFrames.Main, "🏯 Auto Steal", launchAutoStealScript, 1)
+createButton(contentFrames.Main, "⚡️ Speed Boost", speedBoost, 2)
+createButton(contentFrames.Main, "💾 Save Preferences", savePreferences, 3)
+
+-- Onglet AutoFarm
+createButton(contentFrames.AutoFarm, "🎨 ESP", enableESP, 1)
+createButton(contentFrames.AutoFarm, "➕ Auto Lock", toggleAutoLock, 2)
+
+-- Onglet Misc
+createButton(contentFrames.Misc, "Copy the link discord", copyDiscordLink, 1)
+
+-- Toggle UI
+openButton.MouseButton1Click:Connect(function()
+	mainFrame.Visible = not mainFrame.Visible
+end)
+
+-- Multicolor Text
+RunService.RenderStepped:Connect(function()
+	local t = tick() * 0.4
+	local color = Color3.fromHSV(t % 1, 1, 1)
+	title.TextColor3 = color
+	openButton.TextColor3 = color
 end)
